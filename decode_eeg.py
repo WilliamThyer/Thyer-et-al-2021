@@ -10,7 +10,7 @@ import os
 import matplotlib.pyplot as plt
 import time
 import itertools
-from copy import copy
+from copy import deepcopy
 # import mne
 
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -842,23 +842,23 @@ class Interpreter:
 
     def plot_acc_pairwise(self,subtitle='',significance_testing = False, stim_time = [0,250],
                      savefig=False, title = False,lower=.185,upper=.55,chance_text_y=.17):
-        labels = copy(self.labels)
-        acc = copy(self.acc)
-        acc_shuff = copy(self.acc_shuff)
+        labels = deepcopy(self.labels)
+        acc = deepcopy(self.acc)
+        acc_shuff = deepcopy(self.acc_shuff)
         for iss,ss in enumerate(labels):
             self.labels = list(ss)
             self.acc = acc[:,iss]
             self.acc_shuff = acc_shuff[:,iss]
             ss_subtitle = subtitle + '_' + str(ss)[1:-1] + '_'
             self.plot_acc(subtitle=ss_subtitle,significance_testing=significance_testing, stim_time=stim_time,
-                          savefig=savefig,title=title,lower=lower,upper=upper,chance_text_y=chance_text_y)
+                          savefig=savefig,title=title,ylim=[lower,upper],chance_text_y=chance_text_y)
         self.labels = labels
         self.acc = acc
         self.acc_shuff = acc_shuff
 
     def plot_conf_mat_pairwise(self, subtitle='', color_map = plt.cm.RdGy_r, lower=0,upper=1, savefig = False):
-        labels = copy(self.labels)
-        conf_mat = copy(self.conf_mat)
+        labels = deepcopy(self.labels)
+        conf_mat = deepcopy(self.conf_mat)
 
         for iss,ss in enumerate(labels):
             self.labels = list(ss)
@@ -944,6 +944,7 @@ class Interpreter:
         plt.show()
 
 class ERP:
+
     def __init__(self, exp, subtitle = '', fig_dir = None):
         self.exp = exp
         self.info = exp.info        
@@ -1088,4 +1089,3 @@ class ERP:
         
         self.savefig(subtitle=subtitle,save=savefig)
         plt.show()
-
