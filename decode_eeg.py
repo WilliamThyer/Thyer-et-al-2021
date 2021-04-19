@@ -188,7 +188,7 @@ class Experiment_Syncer:
         xdata = dict.fromkeys(self.experiment_names)
         ydata = dict.fromkeys(self.experiment_names)
         for exp in self.experiments:
-            if self.id_dict[sub][exp.experiment_name]:
+            if self.id_dict[sub][exp.experiment_name] is not None:
                 xdata[exp.experiment_name],ydata[exp.experiment_name] = exp.load_eeg(self.id_dict[sub][exp.experiment_name])
             else:
                 xdata.pop(exp.experiment_name)
@@ -237,7 +237,7 @@ class Experiment_Syncer:
     def pairwise(self, xdata_all, ydata_all):
         #xdata,ydata = copy(xdata_all),copy(ydata_all)
         for self.wrangler.iss,ss in enumerate(self.wrangler.group_dict_list):
-            xdata,ydata = copy(xdata_all),copy(ydata_all)
+            xdata,ydata = deepcopy(xdata_all),deepcopy(ydata_all)
 
             self.wrangler.group_dict = ss
             
@@ -522,9 +522,9 @@ class Classification:
         self.acc_shuff[isub,itime,ifold] = self.classifier.score(X_test,y_test_shuffle)
         self.conf_mat[isub,itime,ifold] = confusion_matrix(y_test,y_pred=self.classifier.predict(X_test))
 
-        print(f'{round(((ifold+1)/self.n_splits)*100,1)}% ',end='\r')
-        if ifold+1==self.n_splits:
-            print('                  ',end='\r')
+        # print(f'{round(((ifold+1)/self.n_splits)*100,1)}% ',end='\r')
+        # if ifold+1==self.n_splits:
+            # print('                  ',end='\r')
     
     def decode_pairwise(self, X_train, X_test, y_train, y_test, isub):
         ifold = self.wrangl.ifold
