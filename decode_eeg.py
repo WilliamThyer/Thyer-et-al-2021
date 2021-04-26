@@ -4,14 +4,12 @@ import scipy.stats as sista
 from statsmodels.stats.multitest import multipletests
 import numpy as np
 import pandas as pd
-import json
 import pickle
 import os
 import matplotlib.pyplot as plt
 import time
 import itertools
 from copy import deepcopy
-# import mne
 
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
@@ -53,25 +51,6 @@ class Experiment:
         ydata = np.squeeze(subj_mat['ydata'])
         
         return ydata
-    
-    def load_eeg_from_set(self,isub):
-        
-        if not self.behavior_files:
-            self.xdata_set_files = list(self.data_dir.glob('*processed*.set'))
-
-        # load eeg
-        eeg = mne.io.read_epochs_eeglab(self.xdata_set_files[isub],eog=['HEOG','VEOG','GAZE-X','GAZE-Y'])
-        eeg.load_data()
-
-        # organize and drop artifact trials
-        eeg.set_channel_types({'TP9':'misc','StimTrak':'stim'})
-        artifact_idx = self.load_artifact_idx(isub)
-        eeg.drop(~artifact_idx,verbose=False)
-        eeg.baseline = (-.2,0)
-        eeg.drop_channels(['HEOG','VEOG','GAZE-X','GAZE-Y','StimTrak','TP9'])
-        x = eeg.get_data()
-        y = eeg.events[:,2]
-        return x,y,eeg
 
     def load_behavior(self, isub, remove_artifact_trials=True):
         """
@@ -346,7 +325,7 @@ class Wrangler:
     
     def pairwise(self,xdata_all,ydata_all):
         for self.iss,ss in enumerate(self.group_dict_list):
-            xdata,ydata = copy(xdata_all),copy(ydata_all)
+            xdata,ydata = deepcopy(xdata_all),deepcopy(ydata_all)
             self.group_dict = ss
             yield self.group_labels(xdata,ydata)
         
