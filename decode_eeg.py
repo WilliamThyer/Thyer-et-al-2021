@@ -1,7 +1,5 @@
 from pathlib import Path
 import scipy.io as sio
-import scipy.stats as sista
-from statsmodels.stats.multitest import multipletests
 import numpy as np
 import pandas as pd
 import pickle
@@ -15,9 +13,11 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 import mord
+import scipy.stats as sista
+from statsmodels.stats.multitest import multipletests
 
 class Experiment:
-    def __init__(self,experiment_name ,data_dir , info_from_file = True, test = False):
+    def __init__(self,experiment_name ,data_dir , info_from_file = True, test = False, info_variable_names = ['unique_id','chan_labels','chan_x','chan_y','chan_z','sampling_rate','times']):
 
         self.experiment_name = experiment_name
         self.data_dir = Path(data_dir)
@@ -34,12 +34,13 @@ class Experiment:
         self.info_files = None
 
         if info_from_file:
-            self.info = self.load_info(0)
-            self.info.pop('unique_id')
+            self.info = self.load_info(0,info_variable_names)
+            # self.info.pop('unique_id')
             
     def load_eeg(self,isub):
         subj_mat = sio.loadmat(self.xdata_files[isub],variable_names=['xdata'])
         xdata = np.moveaxis(subj_mat['xdata'],[0,1,2],[1,2,0])
+        # xdata = subj_mat['xdata']
 
         subj_mat = sio.loadmat(self.ydata_files[isub],variable_names=['ydata'])
         ydata = np.squeeze(subj_mat['ydata'])
@@ -505,7 +506,7 @@ class Classification:
         # if ifold+1==self.n_splits:
             # print('                  ',end='\r')
     
-    def decode_pairwise(self, X_train, X_test, y_train, y_test, isub):
+    def decode_pairwise(self, X_train, X_test, y_train, y_test, y_test_shuffle, isub):
         ifold = self.wrangl.ifold
         itime = self.wrangl.itime
         iss = self.wrangl.iss
@@ -515,7 +516,7 @@ class Classification:
         self.classifier.fit(X_train, y_train)
 
         self.acc[isub,iss,itime,ifold] = self.classifier.score(X_test,y_test)
-        self.acc_shuff[isub,iss,itime,ifold] = self.classifier.score(X_test,np.random.permutation(y_test))
+        self.acc_shuff[isub,iss,itime,ifold] = self.classifier.score(X_test,y_test_shuffle)
         self.conf_mat[isub,iss,itime,ifold] = confusion_matrix(y_test,y_pred=self.classifier.predict(X_test))
 
     def decode_temp_gen(self,X_train, X_test, y_train, y_test, isub):
@@ -633,12 +634,12 @@ class Interpreter:
 
         acc = np.mean(self.acc,2)
         se = sista.sem(acc,0)
-        acc_median = np.median(acc,0)
-        upper_bound, lower_bound = acc_median + se, acc_median - se
+        acc_mean = np.mean(acc,0)
+        upper_bound, lower_bound = acc_mean + se, acc_mean - se
         acc_shuff = np.mean(self.acc_shuff,2)
         se_shuff = sista.sem(acc_shuff,0)
-        acc_median_shuff = np.median(acc_shuff,0)
-        upper_bound_shuff, lower_bound_shuff = acc_median_shuff + se_shuff, acc_median_shuff - se_shuff
+        acc_mean_shuff = np.median(acc_shuff,0)
+        upper_bound_shuff, lower_bound_shuff = acc_mean_shuff + se_shuff, acc_mean_shuff - se_shuff
         chance = 1/len(self.labels)
         sig_y = chance-.05
         stim_lower = ylim[0]+.02
@@ -650,16 +651,16 @@ class Interpreter:
         ax.fill_between(stim_time,[stim_lower,stim_lower],[stim_upper,stim_upper],color='gray',alpha=.5)
         ax.plot(self.t,np.ones((len(self.t)))*chance,'--',color='gray')
         ax.fill_between(self.t,upper_bound_shuff,lower_bound_shuff, alpha=.5,color='gray')
-        ax.plot(self.t,acc_median_shuff,color='gray')
+        ax.plot(self.t,acc_mean_shuff,color='gray')
         ax.fill_between(self.t,upper_bound,lower_bound, alpha=.5,color='tomato')
-        ax.plot(self.t,acc_median,color='tab:red',linewidth=2)
+        ax.plot(self.t,acc_mean,color='tab:red',linewidth=2)
 
         # Significance Testing
         if significance_testing:
             p = np.zeros((self.t.shape[0]))
             for i in range(len(self.t)):
-                # wilcoxon is non-parametric paired ttest basically
-                _,p[i] = sista.wilcoxon(x=acc[:,i],y=acc_shuff[:,i],alternative='greater')
+                # one-sided paired ttest
+                _,p[i] = sista.ttest_rel(a=acc[:,i],b=acc_shuff[:,i],alternative='greater')
 
             # Use Benjamini-Hochberg procedure for multiple comparisons, defaults to FDR of .05
             _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
@@ -704,12 +705,19 @@ class Interpreter:
         for isubset,subset in enumerate(subset_list):
             color= colors[isubset]
             acc = self.acc[:,isubset]
+            acc_shuff = self.acc_shuff[:,isubset]
             
             acc = np.mean(acc,2)
             se = sista.sem(acc,0)
-            acc_mean = np.median(acc,0)
+            acc_mean = np.mean(acc,0)
             upper_bound, lower_bound = acc_mean + se, acc_mean - se
+            acc_shuff = np.mean(acc_shuff,2)
+            se_shuff = sista.sem(acc_shuff,0)
+            acc_mean_shuff = np.mean(acc_shuff,0)
+            upper_bound_shuff, lower_bound_shuff = acc_mean_shuff + se_shuff, acc_mean_shuff - se_shuff
             
+            ax.fill_between(self.t,upper_bound_shuff,lower_bound_shuff, alpha=.2,color='gray')
+            ax.plot(self.t,acc_mean_shuff,color='gray')
             ax.fill_between(self.t,upper_bound,lower_bound, alpha=.5,color=color)
             ax.plot(self.t,acc_mean,color=color,label=subset)
 
@@ -717,13 +725,12 @@ class Interpreter:
             if significance_testing:
                 p = np.zeros((self.t.shape[0]))
                 for i in range(len(self.t)):
-                    # wilcoxon is non-parametric paired ttest basically
-                    _,p[i] = sista.wilcoxon(x=(acc[:,i]-chance),alternative='greater')
+                # one-sided paired ttest
+                _,p[i] = sista.ttest_rel(a=acc[:,i],b=acc_shuff[:,i],alternative='greater')
 
                 # Use Benjamini-Hochberg procedure for multiple comparisons, defaults to FDR of .05
                 _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
                 sig05 = corrected_p < .05
-
                 plt.scatter(self.t[sig05]+10, np.ones(sum(sig05))*(sig_ys[isubset]), 
                         marker = 's', s=25, c = color)
                 
