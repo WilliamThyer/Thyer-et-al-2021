@@ -657,16 +657,16 @@ class Interpreter:
 
         # Significance Testing
         if significance_testing:
-            p = np.zeros((self.t.shape[0]))
-            for i in range(len(self.t)):
+            p = np.zeros(len(self.t[self.t>0]))
+            # only test on timepoints after stimulus onset
+            for i,t in enumerate(np.arange(len(self.t))[self.t>0]):
                 # one-sided paired ttest
-                _,p[i] = sista.ttest_rel(a=acc[:,i],b=acc_shuff[:,i],alternative='greater')
-
+                    _,p[i] = sista.ttest_rel(a=acc[:,t],b=acc_shuff[:,t],alternative='greater')
             # Use Benjamini-Hochberg procedure for multiple comparisons, defaults to FDR of .05
             _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
             sig05 = corrected_p < .05
 
-            plt.scatter(self.t[sig05]+10, np.ones(sum(sig05))*(sig_y), 
+            plt.scatter(self.t[self.t>0][sig05]+10, np.ones(sum(sig05))*(sig_y), 
                         marker = 's', s=25, c = 'tab:red')
         
         # aesthetics
@@ -723,16 +723,18 @@ class Interpreter:
 
             # Significance Testing
             if significance_testing:
-                p = np.zeros((self.t.shape[0]))
-                for i in range(len(self.t)):
-                # one-sided paired ttest
-                _,p[i] = sista.ttest_rel(a=acc[:,i],b=acc_shuff[:,i],alternative='greater')
+                p = np.zeros(len(self.t[self.t>0]))
+                # only test on timepoints after stimulus onset
+                for i,t in enumerate(np.arange(len(self.t))[self.t>0]):
+                    # one-sided paired ttest
+                        _,p[i] = sista.ttest_rel(a=acc[:,t],b=acc_shuff[:,t],alternative='greater')
 
                 # Use Benjamini-Hochberg procedure for multiple comparisons, defaults to FDR of .05
                 _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
                 sig05 = corrected_p < .05
-                plt.scatter(self.t[sig05]+10, np.ones(sum(sig05))*(sig_ys[isubset]), 
-                        marker = 's', s=25, c = color)
+
+                plt.scatter(self.t[self.t>0][sig05]+10, np.ones(sum(sig05))*(sig_y), 
+                            marker = 's', s=25, c = 'tab:red')
                 
         handles,_ = ax.get_legend_handles_labels()
         ax.legend(handles, subset_list)
