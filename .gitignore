@@ -6,3 +6,4 @@ output/**
 coef/**
 __pycache__/**
 distance/**
+data_old/**
