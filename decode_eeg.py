@@ -630,7 +630,7 @@ class Interpreter:
                 print(f'Saving {output}')
 
     def plot_acc(self, subtitle='', significance_testing = False, stim_time = [0,250],
-                 savefig=False, title = False, ylim = [.18,.55],chance_text_y = .17):
+                 savefig=False, title = False, ylim = [.18,.55],chance_text_y = .19):
 
         acc = np.mean(self.acc,2)
         se = sista.sem(acc,0)
@@ -666,8 +666,8 @@ class Interpreter:
             _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
             sig05 = corrected_p < .05
 
-            plt.scatter(self.t[self.t>0][sig05]+10, np.ones(sum(sig05))*(sig_y), 
-                        marker = 's', s=25, c = 'tab:red')
+            plt.scatter(self.t[self.t>0][sig05]-10, np.ones(sum(sig05))*(sig_y), 
+                        marker = 's', s=28, c = 'tab:red')
         
         # aesthetics
         ax.spines['right'].set_visible(False)
@@ -677,7 +677,7 @@ class Interpreter:
         ax.yaxis.set_ticks(np.arange(.1,1.1,.1))
         plt.setp(ax.get_xticklabels(), fontsize=14)
         plt.setp(ax.get_yticklabels(), fontsize=14)
-        plt.xlim(-200,1250)
+        plt.xlim(-200,1200)
         plt.ylim(ylim)
 
         # labelling
@@ -685,7 +685,7 @@ class Interpreter:
         plt.ylabel('Accuracy', fontsize=14)
         ax.text(0.85, chance_text_y, 'Chance', transform=ax.transAxes, fontsize=14,
                 verticalalignment='top', color='grey')
-        ax.text(0.188, .98, 'Stim', transform=ax.transAxes, fontsize=14,
+        ax.text(0.19, .98, 'Stim', transform=ax.transAxes, fontsize=16,
                 verticalalignment='top', color='white')
         
         self.savefig('acc'+subtitle,save=savefig)
@@ -733,8 +733,8 @@ class Interpreter:
                 _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
                 sig05 = corrected_p < .05
 
-                plt.scatter(self.t[self.t>0][sig05]+10, np.ones(sum(sig05))*(sig_y), 
-                            marker = 's', s=25, c = 'tab:red')
+                plt.scatter(self.t[self.t>0][sig05]+10, np.ones(sum(sig05))*(sig_ys[isubset]), 
+                            marker = 's', s=28, c = 'tab:red')
                 
         handles,_ = ax.get_legend_handles_labels()
         ax.legend(handles, subset_list)
