@@ -25,14 +25,6 @@ This decoding uses the [Mord](https://github.com/fabianp/mord) package which is 
 - `ERP`
   - Less connected than the other classes. Handles plotting of ERPs.
 
-`behavior_analysis.ipynb`
-
-- Plots behavior. Specifically accuracy across set sizes.
-
-`plot_erp.ipynb`
-
-- Plots frontal, central, and parietal/occipital ERPs for each experiment.
-
 `decode_eeg.ipynb`
 
 - Basic notebook for load classification within an experiment. Not actually used, since `decode_eeg_loop.ipynb` handles all within-experiment decoding. Still a useful template.
@@ -60,3 +52,15 @@ This decoding uses the [Mord](https://github.com/fabianp/mord) package which is 
 `decode_load_colinearity_hyperplane.ipynb`
 
 - Using data from Diaz et al. 2021, train classifier on set size 2 ungrouped and set size 4 ungrouped. Then test on set size 4 grouped (4 items, but arranged to look like 2). Measure distance from hyperplane for each condition.
+
+`behavior_analysis.ipynb`
+
+- Plots behavior. Specifically accuracy across set sizes.
+
+`plot_erp.ipynb`
+
+- Plots frontal, central, and parietal/occipital ERPs for each experiment.
+
+`plot_topomap_and_coefs.ipynb`
+
+- Plots topography maps for each set size at 250-750 and 750-1250 ms time periods. Also plots classifier coefficients, projected onto scalp.
