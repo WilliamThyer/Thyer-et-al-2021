@@ -93,6 +93,9 @@ class Experiment:
             self.info_files = list(self.data_dir.glob('*info*.mat'))
         info_file = sio.loadmat(self.info_files[isub],variable_names=variable_names)
         info = {k: np.squeeze(info_file[k]) for k in variable_names}
+
+        # for some reason, electrode locations are swapped. This fixes that.
+        info['chan_x'], info['chan_y'] = info['chan_y'], info['chan_x']
         
         return info
 
