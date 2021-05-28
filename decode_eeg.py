@@ -93,9 +93,6 @@ class Experiment:
             self.info_files = list(self.data_dir.glob('*info*.mat'))
         info_file = sio.loadmat(self.info_files[isub],variable_names=variable_names)
         info = {k: np.squeeze(info_file[k]) for k in variable_names}
-
-        # for some reason, electrode locations are swapped. This fixes that.
-        info['chan_x'], info['chan_y'] = info['chan_y'], info['chan_x']
         
         return info
 
@@ -218,7 +215,7 @@ class Experiment_Syncer:
         return xdata,ydata
     
     def pairwise(self, xdata_all, ydata_all):
-        #xdata,ydata = copy(xdata_all),copy(ydata_all)
+
         for self.wrangler.iss,ss in enumerate(self.wrangler.group_dict_list):
             xdata,ydata = deepcopy(xdata_all),deepcopy(ydata_all)
 
@@ -562,19 +559,22 @@ class Classification:
 
 class Interpreter:
     def __init__(
-        self, clfr, subtitle = '', output_dir = None, experiment_name = ''
+        self, clfr=None, subtitle = '', output_dir = None, experiment_name = ''
                 ):
-        self.clfr = clfr
-        self.t = clfr.wrangl.t
-        self.time_window = clfr.wrangl.time_window
-        self.time_step = clfr.wrangl.time_step
-        self.trial_average = clfr.wrangl.trial_average
-        self.n_splits = clfr.wrangl.n_splits
-        self.labels = list(clfr.wrangl.labels)
-        self.electrodes = clfr.wrangl.electrodes
-        self.acc = clfr.acc
-        self.acc_shuff = clfr.acc_shuff
-        self.conf_mat = clfr.conf_mat
+        if clfr is not None:
+            self.clfr = clfr
+            self.t = clfr.wrangl.t
+            self.time_window = clfr.wrangl.time_window
+            self.time_step = clfr.wrangl.time_step
+            self.trial_average = clfr.wrangl.trial_average
+            self.n_splits = clfr.wrangl.n_splits
+            self.labels = list(clfr.wrangl.labels)
+            self.electrodes = clfr.wrangl.electrodes
+            self.acc = clfr.acc
+            self.acc_shuff = clfr.acc_shuff
+            self.conf_mat = clfr.conf_mat
+        else:
+            print('No classification object provided.')
 
         import matplotlib
         matplotlib.rcParams['font.sans-serif'] = "Arial"
