@@ -645,7 +645,7 @@ class Interpreter:
         upper_bound_shuff, lower_bound_shuff = acc_mean_shuff + se_shuff, acc_mean_shuff - se_shuff
         chance = 1/len(self.labels)
         sig_y = chance-.05
-        stim_lower = ylim[0]+.02
+        stim_lower = ylim[0]+.01
         stim_upper = ylim[1]
 
         # plotting
@@ -670,7 +670,7 @@ class Interpreter:
             sig05 = corrected_p < .05
 
             plt.scatter(self.t[self.t>0][sig05]-10, np.ones(sum(sig05))*(sig_y), 
-                        marker = 's', s=28, c = 'tab:red')
+                        marker = 'o', s=22, c = 'tab:red',label='p < .05')
         
         # aesthetics
         ax.spines['right'].set_visible(False)
@@ -682,11 +682,12 @@ class Interpreter:
         plt.setp(ax.get_yticklabels(), fontsize=14)
         plt.xlim(-200,1200)
         plt.ylim(ylim)
+        plt.legend(loc='lower right',frameon=False,fontsize=11)
 
         # labelling
         plt.xlabel('Time from stimulus onset (ms)', fontsize=14)
-        plt.ylabel('Accuracy', fontsize=14)
-        ax.text(0.85, chance_text_y, 'Chance', transform=ax.transAxes, fontsize=14,
+        plt.ylabel('Classification accuracy', fontsize=14)
+        ax.text(0.85, chance_text_y, 'Shuffle', transform=ax.transAxes, fontsize=14,
                 verticalalignment='top', color='grey')
         ax.text(0.19, .98, 'Stim', transform=ax.transAxes, fontsize=16,
                 verticalalignment='top', color='white')
