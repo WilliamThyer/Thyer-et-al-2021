@@ -103,7 +103,7 @@ class Experiment_Syncer:
         wrangler,
         train_group,
         get_matched_data=True
-    ):
+        ):
         self.experiments = experiments
         self.wrangler = wrangler
         self.train_group = train_group
@@ -118,7 +118,9 @@ class Experiment_Syncer:
             self._find_all_ids()
 
     def _load_unique_ids(self):
-        
+        '''
+        Loads all IDs in all experiments
+        '''
         self.all_ids = []
         for exp in self.experiments:
             exp.unique_ids = []
@@ -137,7 +139,9 @@ class Experiment_Syncer:
                 self.matched_ids.append(i)
         
     def _find_matched_ids(self):
-
+        '''
+        Finds only IDs that are in all experiments
+        '''
         self.id_dict = dict.fromkeys(self.matched_ids)
         for k in self.id_dict.keys():
             self.id_dict[k] = dict.fromkeys(self.experiment_names)
@@ -151,7 +155,9 @@ class Experiment_Syncer:
         self.nsub = len(self.matched_ids)
 
     def _find_all_ids(self):
-
+        '''
+        Finds IDs in all experiments. Used for loading all data across experiments.
+        '''
         self.id_dict = dict.fromkeys(self.all_ids)
         for k in self.id_dict.keys():
             self.id_dict[k] = dict.fromkeys(self.experiment_names)
@@ -178,7 +184,7 @@ class Experiment_Syncer:
     def load_behavior(self,sub):
         beh = dict.fromkeys(self.experiment_names)
         for exp in self.experiments:
-            if self.id_dict[sub][exp.experiment_name]:
+            if self.id_dict[sub][exp.experiment_name] is not None:
                 beh[exp.experiment_name] = exp.load_behavior(self.id_dict[sub][exp.experiment_name])
             else:
                 beh.pop(exp.experiment_name)
@@ -190,22 +196,33 @@ class Experiment_Syncer:
         return xdata,ydata
 
     def group_labels(self,xdata,ydata):
+        '''
+        groups classes based on group_dict, removes not-included classes
+        '''
         for exp_name in xdata.keys():
             xdata[exp_name],ydata[exp_name] = self.wrangler.group_labels(xdata[exp_name],ydata[exp_name])
         return xdata,ydata
 
     def balance_labels(self,xdata,ydata):
-        #right now this just balances within experiment, not across
+        '''
+        balances number of class instances
+        '''
         for exp_name in xdata.keys():
             xdata[exp_name],ydata[exp_name] = self.wrangler.balance_labels(xdata[exp_name],ydata[exp_name])
         return xdata,ydata
     
     def average_trials(self,xdata,ydata):
+        '''
+        bins trials based on trial_average
+        '''
         for exp_name in xdata.keys():
             xdata[exp_name],ydata[exp_name] = self.wrangler.average_trials(xdata[exp_name],ydata[exp_name])
         return xdata,ydata
     
     def setup_data(self,xdata,ydata,labels=False,group_dict=False):
+        '''
+        does basic data manipulation using other functions.
+        '''
         if labels:
             xdata,ydata = self.select_labels(xdata,ydata)
         if group_dict:
@@ -215,6 +232,9 @@ class Experiment_Syncer:
         return xdata,ydata
     
     def pairwise(self, xdata_all, ydata_all):
+        '''
+        When using group_dict_list (e.g. 1vs2 then 2vs4), yields data with only those classes.
+        '''
 
         for self.wrangler.iss,ss in enumerate(self.wrangler.group_dict_list):
             xdata,ydata = deepcopy(xdata_all),deepcopy(ydata_all)
@@ -226,6 +246,9 @@ class Experiment_Syncer:
             yield xdata, ydata
         
     def group_data(self,xdata,ydata):
+        '''
+        groups data into train and test groups based on self.train_group
+        '''
         xdata_train,xdata_test=None,None
 
         for exp_name in xdata.keys():
@@ -312,6 +335,13 @@ class Wrangler:
             return xdata, ydata
 
     def group_labels(self,xdata,ydata,empty_val=9999):
+        """
+        groups classes based on group dict. Also excludes classes not included in group_dict.
+        If one of your class labels is 9999, change empty_val to something your class label isn't.
+
+        xdata: eeg data, shape[electrodes,timepoints,trials]
+        ydata: labels, shape[trials]
+        """
         
         xdata_new = np.ones(xdata.shape)*empty_val
         ydata_new = np.ones(ydata.shape)*empty_val
@@ -325,12 +355,18 @@ class Wrangler:
         return xdata_new[~trial_idx],ydata_new[~trial_idx]
     
     def pairwise(self,xdata_all,ydata_all):
+        '''
+        When using group_dict_list (e.g. 1vs2 then 2vs4), yields data with only those classes.
+        '''
         for self.iss,ss in enumerate(self.group_dict_list):
             xdata,ydata = deepcopy(xdata_all),deepcopy(ydata_all)
             self.group_dict = ss
             yield self.group_labels(xdata,ydata)
         
     def balance_labels(self,xdata,ydata,downsamp=None):
+        '''
+        balances number of class instances
+        '''
         unique_labels, counts_labels = np.unique(ydata, return_counts=True)
         if downsamp is None:
             downsamp = min(counts_labels)
@@ -344,6 +380,9 @@ class Wrangler:
         return xdata,ydata
     
     def average_trials(self,xdata,ydata):
+        '''
+        bins trials based on trial_average
+        '''
         if self.trial_average:
             unique_labels, counts_labels = np.unique(ydata, return_counts=True)
             min_count = np.floor(min(counts_labels)/self.trial_average)*self.trial_average
@@ -361,7 +400,9 @@ class Wrangler:
         else: return xdata,ydata
     
     def setup_data(self,xdata,ydata):
-        
+        '''
+        does basic data manipulation using other functions.
+        '''
         if self.group_dict:
             xdata,ydata = self.group_labels(xdata,ydata)
         elif self.labels:
@@ -371,7 +412,10 @@ class Wrangler:
         return xdata,ydata
 
     def select_electrodes(self, xdata, electrode_subset = None):
-        
+        '''
+        removes electrodes not included in electrode_subset.
+        Not used in analyses for paper.
+        '''
         if electrode_subset is not None:
             # Create index for electrodes to include in plot
             electrode_labels = [el for n, el in enumerate(self.electrodes) if el.startswith(electrode_subset)]
@@ -380,7 +424,10 @@ class Wrangler:
         return xdata[:,electrode_idx]
 
     def roll_over_electrodes(self, xdata_all, ydata_all, electrode_subset_list=None, electrode_idx_list=None):
-        
+        '''
+        yields data with electrodes not in electrode subset, iterating over electrode_subset_list.
+        Not used in analyses for paper.
+        '''
         for self.ielec,electrode_subset in enumerate(self.electrode_subset_list):
             yield self.select_electrodes(xdata_all,electrode_subset), ydata_all
 
@@ -399,19 +446,6 @@ class Wrangler:
             else:
                 yield X_train_all, X_test_all, y_train, y_test
             self.ifold += 1
-    
-    # def roll_over_time(self, X_train_all, X_test_all):
-    #     """
-    #     returns one timepoint of EEG trial at a time
-    #     """
-    #     for self.itime, time in enumerate(self.t):
-    #         time_window_idx = (self.samples >= time) & (self.samples < time + self.time_window)
-
-    #         # Data for this time bin
-    #         X_train = np.mean(X_train_all[...,time_window_idx],2)
-    #         X_test = np.mean(X_test_all[...,time_window_idx],2)
-
-    #         yield X_train, X_test
 
     def roll_over_time(self, X_train_all, X_test_all=None):
         """
@@ -429,6 +463,10 @@ class Wrangler:
                 yield X_train
     
     def roll_over_time_temp_gen(self,X_train_all, X_test_all):
+        '''
+        yield every other timepoint for each timepoint. Used for temporal generalizability plots.
+        Not used in analyses for paper.
+        '''
 
         for self.itime1, time1 in enumerate(self.t):
             for self.itime2, time2 in enumerate(self.t):
@@ -442,7 +480,11 @@ class Wrangler:
                 yield X_train, X_test
 
     def train_test_custom_split(self,xdata_train,xdata_test,ydata_train,ydata_test):
-
+        '''
+        Takes in train and test data and yields portion of each for purposes of cross-validation.
+        Useful if you want data to always be in train, and other data to always be in test.
+        e.g. train on color and test on orientation data. 
+        '''
         cross_val_test = StratifiedShuffleSplit(n_splits=1)
         self.ifold = 0
         for train_index,_ in self.cross_val.split(xdata_train,ydata_train):
@@ -491,6 +533,9 @@ class Classification:
         return X_train, X_test
 
     def decode(self, X_train, X_test, y_train, y_test, y_test_shuffle, isub):
+        '''
+        does actual training and testing of classifier after standardizing the data. Also does shuffled testing and confusion matrix.
+        '''
         ifold = self.wrangl.ifold
         itime = self.wrangl.itime
 
@@ -501,12 +546,13 @@ class Classification:
         self.acc[isub,itime,ifold] = self.classifier.score(X_test,y_test)
         self.acc_shuff[isub,itime,ifold] = self.classifier.score(X_test,y_test_shuffle)
         self.conf_mat[isub,itime,ifold] = confusion_matrix(y_test,y_pred=self.classifier.predict(X_test))
-
-        # print(f'{round(((ifold+1)/self.n_splits)*100,1)}% ',end='\r')
-        # if ifold+1==self.n_splits:
-            # print('                  ',end='\r')
     
     def decode_pairwise(self, X_train, X_test, y_train, y_test, y_test_shuffle, isub):
+        '''
+        Same functionality as decode. But results matrices are different shape.
+        Used when using group_dict_list and rolling over multiple sets of classes (e.g. 1vs2 and 2vs4)
+        '''
+
         ifold = self.wrangl.ifold
         itime = self.wrangl.itime
         iss = self.wrangl.iss
@@ -520,6 +566,10 @@ class Classification:
         self.conf_mat[isub,iss,itime,ifold] = confusion_matrix(y_test,y_pred=self.classifier.predict(X_test))
 
     def decode_temp_gen(self,X_train, X_test, y_train, y_test, isub):
+        '''
+        Same functionality as decode. But results matrices are different shape.
+        Not used in analyses for paper.
+        '''
         ifold = self.wrangl.ifold
         itime1 = self.wrangl.itime1
         itime2 = self.wrangl.itime2
@@ -533,6 +583,11 @@ class Classification:
         self.conf_mat[isub,itime1,itime2,ifold] = confusion_matrix(y_test,y_pred=self.classifier.predict(X_test))
     
     def decode_electrode_subset(self, X_train, X_test, y_train, y_test, isub):
+        '''
+        Same functionality as decode. But results matrices are different shape.
+        Not used in analyses for paper.
+        '''
+
         ifold = self.wrangl.ifold
         itime = self.wrangl.itime
         ielec = self.wrangl.ielec
@@ -544,18 +599,6 @@ class Classification:
         self.acc[isub,ielec,itime,ifold] = self.classifier.score(X_test,y_test)
         self.acc_shuff[isub,ielec,itime,ifold] = self.classifier.score(X_test,np.random.permutation(y_test))
         self.conf_mat[isub,ielec,itime,ifold] = confusion_matrix(y_test,y_pred=self.classifier.predict(X_test))
-
-    def decode_subj_pairwise(self, X_train, X_test, y_train, y_test, isub_train, isub_test):
-        ifold = self.wrangl.ifold
-        itime = self.wrangl.itime
-
-        X_train, X_test = self.standardize(X_train, X_test)
-        
-        self.classifier.fit(X_train, y_train)
-
-        self.acc[isub_train,isub_test,itime,ifold] = self.classifier.score(X_test,y_test)
-        self.acc_shuff[isub_train,isub_test,itime,ifold] = self.classifier.score(X_test,np.random.permutation(y_test))
-        self.conf_mat[isub_train,isub_test,itime,ifold] = confusion_matrix(y_test,y_pred=self.classifier.predict(X_test))
 
 class Interpreter:
     def __init__(
@@ -634,7 +677,9 @@ class Interpreter:
 
     def plot_acc(self, subtitle='', significance_testing = False, stim_time = [0,250],
                  savefig=False, title = False, ylim = [.18,.55],chance_text_y = .19):
-
+        '''
+        Plots classification accuracy
+        '''
         acc = np.mean(self.acc,2)
         se = sista.sem(acc,0)
         acc_mean = np.mean(acc,0)
@@ -695,76 +740,6 @@ class Interpreter:
         self.savefig('acc'+subtitle,save=savefig)
         plt.show()
     
-    def plot_acc_subset(self,subset_list,chance,sig_ys, subtitle='',significance_testing = False, stim_time = [0,250],
-                                   savefig=False, title = False, ylim = [.18,.55],chance_text_y = .17):
-        # plotting
-        ax = plt.subplot(111)
-        stim_lower = ylim[0]+.02
-        stim_upper = ylim[1]
-        ax.fill_between(stim_time,[stim_lower,stim_lower],[stim_upper,stim_upper],color='gray',alpha=.5)
-        ax.plot(self.t,np.ones((len(self.t)))*chance,'--',color='gray')
-        colors = ['royalblue','firebrick','forestgreen','orange','purple']
-        
-        # sig_ys = [.2125,.1875,.2]
-        for isubset,subset in enumerate(subset_list):
-            color= colors[isubset]
-            acc = self.acc[:,isubset]
-            acc_shuff = self.acc_shuff[:,isubset]
-            
-            acc = np.mean(acc,2)
-            se = sista.sem(acc,0)
-            acc_mean = np.mean(acc,0)
-            upper_bound, lower_bound = acc_mean + se, acc_mean - se
-            acc_shuff = np.mean(acc_shuff,2)
-            se_shuff = sista.sem(acc_shuff,0)
-            acc_mean_shuff = np.mean(acc_shuff,0)
-            upper_bound_shuff, lower_bound_shuff = acc_mean_shuff + se_shuff, acc_mean_shuff - se_shuff
-            
-            ax.fill_between(self.t,upper_bound_shuff,lower_bound_shuff, alpha=.2,color='gray')
-            ax.plot(self.t,acc_mean_shuff,color='gray')
-            ax.fill_between(self.t,upper_bound,lower_bound, alpha=.5,color=color)
-            ax.plot(self.t,acc_mean,color=color,label=subset)
-
-            # Significance Testing
-            if significance_testing:
-                p = np.zeros(len(self.t[self.t>0]))
-                # only test on timepoints after stimulus onset
-                for i,t in enumerate(np.arange(len(self.t))[self.t>0]):
-                    # one-sided paired ttest
-                        _,p[i] = sista.ttest_rel(a=acc[:,t],b=acc_shuff[:,t],alternative='greater')
-
-                # Use Benjamini-Hochberg procedure for multiple comparisons, defaults to FDR of .05
-                _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
-                sig05 = corrected_p < .05
-
-                plt.scatter(self.t[self.t>0][sig05]+10, np.ones(sum(sig05))*(sig_ys[isubset]), 
-                            marker = 's', s=28, c = 'tab:red')
-                
-        handles,_ = ax.get_legend_handles_labels()
-        ax.legend(handles, subset_list)
-        
-        # aesthetics
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.yaxis.set_ticks_position('left')
-        ax.xaxis.set_ticks_position('bottom')
-        ax.yaxis.set_ticks(np.arange(.1,1.1,.1))
-        plt.setp(ax.get_xticklabels(), fontsize=14)
-        plt.setp(ax.get_yticklabels(), fontsize=14)
-        plt.xlim(-200,1250)
-        plt.ylim(ylim)
-
-        # labelling
-        plt.xlabel('Time from stimulus onset (ms)', fontsize=14)
-        plt.ylabel('Accuracy', fontsize=14)
-        # ax.text(0.85, chance_text_y, 'Chance', transform=ax.transAxes, fontsize=14,
-                # verticalalignment='top', color='grey')
-        ax.text(0.188, .98, 'Stim', transform=ax.transAxes, fontsize=14,
-                verticalalignment='top', color='white')
-
-        self.savefig('acc'+subtitle,save=savefig)
-        plt.show()
-
     def plot_conf_mat(self, subtitle='', color_map = plt.cm.RdGy_r, lower=0,upper=1, savefig = False,subplot = 111):
         """
         plots the confusion matrix for the classifier
@@ -811,9 +786,7 @@ class Interpreter:
     def temporal_generalizability(self,cmap=plt.cm.viridis,lower_lim=0, upper_lim=1, savefig = False):
         """
         Plot temporal generalizability
-
-        Inputs:
-
+        Not used in analyses for paper.
         """
 
         plt.figure()
@@ -830,35 +803,7 @@ class Interpreter:
         plt.ylabel('Training Timepoint (ms)')
         plt.gca().invert_yaxis()
 
-        self.savefig('temp_gen_',save=savefig)
-
-    def plot_acc_pairwise(self,subtitle='',significance_testing = False, stim_time = [0,250],
-                     savefig=False, title = False,lower=.185,upper=.55,chance_text_y=.17):
-        labels = deepcopy(self.labels)
-        acc = deepcopy(self.acc)
-        acc_shuff = deepcopy(self.acc_shuff)
-        for iss,ss in enumerate(labels):
-            self.labels = list(ss)
-            self.acc = acc[:,iss]
-            self.acc_shuff = acc_shuff[:,iss]
-            ss_subtitle = subtitle + '_' + str(ss)[1:-1] + '_'
-            self.plot_acc(subtitle=ss_subtitle,significance_testing=significance_testing, stim_time=stim_time,
-                          savefig=savefig,title=title,ylim=[lower,upper],chance_text_y=chance_text_y)
-        self.labels = labels
-        self.acc = acc
-        self.acc_shuff = acc_shuff
-
-    def plot_conf_mat_pairwise(self, subtitle='', color_map = plt.cm.RdGy_r, lower=0,upper=1, savefig = False):
-        labels = deepcopy(self.labels)
-        conf_mat = deepcopy(self.conf_mat)
-
-        for iss,ss in enumerate(labels):
-            self.labels = list(ss)
-            self.conf_mat = conf_mat[:,iss]
-            ss_subtitle = subtitle + '_' + str(ss)[1:-1] + '_'
-            self.plot_conf_mat(subtitle=ss_subtitle, color_map=color_map,savefig=savefig,lower=lower,upper=upper)
-        self.labels = labels
-        self.conf_mat = conf_mat
+        self.savefig('temp_gen_',save=savefig)    
     
     #FIX THIS
     def plot_acc_single_feature(self, other_acc, other_acc_shuff, subtitle='', significance_testing = False, stim_time = [0,250],
@@ -868,18 +813,18 @@ class Interpreter:
         acc_feat2 = np.mean(other_acc,2)
         
         #two gray lines
-        acc_feat1_median = np.median(acc_feat1,0)
-        acc_feat2_median = np.median(acc_feat2,0)
+        acc_feat1_mean = np.mean(acc_feat1,0)
+        acc_feat2_mean = np.mean(acc_feat2,0)
         
         #single feature
         acc_single_feature_subs = (acc_feat1 + acc_feat2)/2
         acc_single_feature_subs_se = sista.sem(acc_single_feature_subs,0)
-        acc_single_feature_mean = (acc_feat1_median + acc_feat2_median)/2
+        acc_single_feature_mean = (acc_feat1_mean + acc_feat2_mean)/2
 
         acc_shuff = np.mean(self.acc_shuff,2)
         acc_shuff2 = np.mean(other_acc_shuff,2)
         acc_shuff_both = (acc_shuff+acc_shuff2)/2
-        acc_shuff = np.median(acc_shuff_both,0)
+        acc_shuff = np.mean(acc_shuff_both,0)
         se_shuff = sista.sem(acc_shuff_both,0)
 
         upper_bound, lower_bound = acc_single_feature_mean + acc_single_feature_subs_se, acc_single_feature_mean - acc_single_feature_subs_se
