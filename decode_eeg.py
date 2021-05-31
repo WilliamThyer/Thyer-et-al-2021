@@ -616,8 +616,6 @@ class Interpreter:
             self.acc = clfr.acc
             self.acc_shuff = clfr.acc_shuff
             self.conf_mat = clfr.conf_mat
-        else:
-            print('No classification object provided.')
 
         import matplotlib
         matplotlib.rcParams['font.sans-serif'] = "Arial"
@@ -715,7 +713,7 @@ class Interpreter:
             sig05 = corrected_p < .05
 
             plt.scatter(self.t[self.t>0][sig05]-10, np.ones(sum(sig05))*(sig_y), 
-                        marker = 'o', s=22, c = 'tab:red',label='p < .05')
+                        marker = 's', s=28, c = 'tab:red',label='p < .05')
         
         # aesthetics
         ax.spines['right'].set_visible(False)
@@ -732,13 +730,21 @@ class Interpreter:
         # labelling
         plt.xlabel('Time from stimulus onset (ms)', fontsize=14)
         plt.ylabel('Classification accuracy', fontsize=14)
-        ax.text(0.85, chance_text_y, 'Shuffle', transform=ax.transAxes, fontsize=14,
+        ax.text(0.875, chance_text_y, 'Shuffle', transform=ax.transAxes, fontsize=14,
                 verticalalignment='top', color='grey')
         ax.text(0.19, .98, 'Stim', transform=ax.transAxes, fontsize=16,
                 verticalalignment='top', color='white')
         
         self.savefig('acc'+subtitle,save=savefig)
         plt.show()
+
+        sig_timepoints = self.t[self.t>0][sig05]
+        delay_period_acc = np.mean(acc_mean[self.t>250])
+        delay_period_sd = np.std(acc_mean[self.t>250]) 
+
+        print(f'Significant timepoints: {sig_timepoints}')
+        print(f'Mean delay accuracy: {delay_period_acc}')
+        print(f'Mean delay S.D.: {delay_period_sd}')
     
     def plot_conf_mat(self, subtitle='', color_map = plt.cm.RdGy_r, lower=0,upper=1, savefig = False,subplot = 111):
         """
