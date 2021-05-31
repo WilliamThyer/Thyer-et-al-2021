@@ -674,7 +674,7 @@ class Interpreter:
                 print(f'Saving {output}')
 
     def plot_acc(self, subtitle='', significance_testing = False, stim_time = [0,250],
-                 savefig=False, title = False, ylim = [.18,.55],chance_text_y = .19):
+                 savefig=False, title = None, ylim = [.18,.55],chance_text_y = .19):
         '''
         Plots classification accuracy
         '''
@@ -734,6 +734,8 @@ class Interpreter:
                 verticalalignment='top', color='grey')
         ax.text(0.19, .98, 'Stim', transform=ax.transAxes, fontsize=16,
                 verticalalignment='top', color='white')
+        if title is not None:
+            plt.title(title,fontsize = 18)
         
         self.savefig('acc'+subtitle,save=savefig)
         plt.show()

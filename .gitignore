@@ -1,9 +1,9 @@
 data/**
 old/**
 mord/**
-output/**
 .ipynb_checkpoints/**
 coef/**
 __pycache__/**
 distance/**
 data_old/**
+output/**
