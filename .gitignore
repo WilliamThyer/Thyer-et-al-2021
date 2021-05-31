@@ -6,4 +6,4 @@ coef/**
 __pycache__/**
 distance/**
 data_old/**
-output/**
+*.pickle
