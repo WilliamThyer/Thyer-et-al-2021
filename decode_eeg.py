@@ -793,10 +793,19 @@ class Interpreter:
                 # Use Benjamini-Hochberg procedure for multiple comparisons, defaults to FDR of .05
                 _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
                 sig05 = corrected_p < .05
+                
+
 
                 plt.scatter(self.t[self.t>0][sig05]-10, np.ones(sum(sig05))*(sig_ys[isubset]), 
                             marker = 's', s=28, c = color)
-                
+            
+            sig_timepoints = self.t[self.t>0][sig05]
+            delay_period_acc = np.mean(acc_mean[self.t>250])
+            delay_period_sd = np.std(acc_mean[self.t>250]) 
+            print(f'{subset} significant timepoints: {sig_timepoints}')
+            print(f'{subset} mean delay accuracy: {delay_period_acc}')
+            print(f'{subset} mean delay S.D.: {delay_period_sd}')
+
         handles,_ = ax.get_legend_handles_labels()
         ax.legend(handles, subset_list)
         
