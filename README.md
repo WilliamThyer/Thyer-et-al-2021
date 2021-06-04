@@ -33,29 +33,50 @@ This decoding uses the [Mord](https://github.com/fabianp/mord) package which is 
 
 - Loops through experiments and trial bin size parameter and performs classifications.
 
+<img src="output/figures/acc1801_20210531_1437.png" alt="drawing" width="300"/>
+
 `decode_load_single_feature.ipynb`
 
 - Trains classifiers on experiment 1 (color) and tests on experiment 2 (orientation) and vice versa.
+
+<img src="output/figures/single_feat_acc20210601_1146.png" alt="drawing" width="300"/>
+
+`decode_load_single_feature_set_size.ipyng`
+
+- Train classifiers on mixture of experiment 1 (color) and tests on experiment 2 (orientation) with set size 1 vs 2, 2 vs 3, & 3 vs 4.
+
+<img src="output/figures/accsingle_feat_ss_20210601_1158.png" alt="drawing" width="300"/>
 
 `decode_load_single_feature_to_conjunction.ipynb`
 
 - Trains classifiers on experiment 1 and 2 (single feature, color or orientation) and tests on experiment 3 (conjunction, color & orientation).
 
+<img src="output/figures/single_feature_to_conj_trialbin20_acc20210531_2111.png" alt="drawing" width="300"/>
+
 `decode_preds_dont_double.ipynb`
 
 - Trains classifiers on experiment 1 and 2 (single feature, color or orientation) 1 vs 2 and 2 vs 4. Also trains classifiers on experiment 3 (conjunction, color & orientation) 1 vs 2 and 2 vs 4. Then compares predictions from those classifiers.
+
+<img src="output/figures/preds_dont_double.png" alt="drawing" width="300"/>
 
 `decode_load_acc_and_k.ipynb`
 
 - Classifies load on all unique subjects across all three experiments. Also calculates K for each subject. Then correlates classification accuracy and K.
 
+<img src="output/figures/classification_acc_k_corr.png" alt="drawing" width="300"/>
+
 `decode_load_colinearity_hyperplane.ipynb`
 
 - Using data from Diaz et al. 2021, train classifier on set size 2 ungrouped and set size 4 ungrouped. Then test on set size 4 grouped (4 items, but arranged to look like 2). Measure distance from hyperplane for each condition.
 
+<img src="output/figures/colinearity_hyperplane.png" alt="drawing" width="300"/>
+<img src="output/figures/colinearity_hyperplane_periods.png" alt="drawing" width="300"/>
+
 `behavior_analysis.ipynb`
 
 - Plots behavior. Specifically accuracy across set sizes.
+
+<img src="output/figures/cd_acuracy.png" alt="drawing" width="400"/>
 
 `plot_erp.ipynb`
 
