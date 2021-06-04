@@ -807,8 +807,9 @@ class Interpreter:
             print(f'{subset} mean delay S.D.: {delay_period_sd}')
 
         handles,_ = ax.get_legend_handles_labels()
-        ax.legend(handles, subset_list)
-        
+        leg = ax.legend(handles, subset_list,title='Classification',fontsize=12)
+        plt.setp(leg.get_title(),fontsize=12)
+
         # aesthetics
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
@@ -817,13 +818,13 @@ class Interpreter:
         ax.yaxis.set_ticks(np.arange(.1,1.1,.1))
         plt.setp(ax.get_xticklabels(), fontsize=14)
         plt.setp(ax.get_yticklabels(), fontsize=14)
-        plt.xlim(-200,1250)
+        plt.xlim(-200,1200)
         plt.ylim(ylim)
 
         # labelling
         plt.xlabel('Time from stimulus onset (ms)', fontsize=14)
         plt.ylabel('Accuracy', fontsize=14)
-        ax.text(0.84, chance_text_y, 'Shuffle', transform=ax.transAxes, fontsize=14,
+        ax.text(.88, chance_text_y, 'Shuffle', transform=ax.transAxes, fontsize=14,
                 verticalalignment='top', color='grey')
         ax.text(0.185, .98, 'Stim', transform=ax.transAxes, fontsize=16,
                 verticalalignment='top', color='white')
