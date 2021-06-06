@@ -33,25 +33,25 @@ This decoding uses the [Mord](https://github.com/fabianp/mord) package which is 
 
 - Loops through experiments and trial bin size parameter and performs classifications.
 
-<img src="output/figures/acc1801_20210531_1437.png" alt="drawing" width="300"/>
+<img src="output/figures/acc1801.png" alt="drawing" width="300"/>
 
 `decode_load_single_feature.ipynb`
 
 - Trains classifiers on experiment 1 (color) and tests on experiment 2 (orientation) and vice versa.
 
-<img src="output/figures/single_feat_acc20210601_1146.png" alt="drawing" width="300"/>
+<img src="output/figures/acc_single_feature.png" alt="drawing" width="300"/>
 
 `decode_load_single_feature_set_size.ipyng`
 
 - Train classifiers on mixture of experiment 1 (color) and tests on experiment 2 (orientation) with set size 1 vs 2, 2 vs 3, & 3 vs 4.
 
-<img src="output/figures/accsingle_feat_ss_20210601_1158.png" alt="drawing" width="300"/>
+<img src="output/figures/acc_single_feat_ss_.png" alt="drawing" width="300"/>
 
 `decode_load_single_feature_to_conjunction.ipynb`
 
 - Trains classifiers on experiment 1 and 2 (single feature, color or orientation) and tests on experiment 3 (conjunction, color & orientation).
 
-<img src="output/figures/single_feature_to_conj_trialbin20_acc20210531_2111.png" alt="drawing" width="300"/>
+<img src="output/figures/acc_sing_to_conj.png" alt="drawing" width="300"/>
 
 `decode_preds_dont_double.ipynb`
 
@@ -76,7 +76,7 @@ This decoding uses the [Mord](https://github.com/fabianp/mord) package which is 
 
 - Plots behavior. Specifically accuracy across set sizes.
 
-<img src="output/figures/cd_acuracy.png" alt="drawing" width="400"/>
+<img src="output/figures/cd_accuracy.png" alt="drawing" width="400"/>
 
 `plot_erp.ipynb`
 
