@@ -668,7 +668,7 @@ class Interpreter:
     def savefig(self, subtitle = '', file_format = ['.pdf','.png'], save = True):
         if save:
             for file in file_format:
-                filename = self.subtitle + subtitle + self.timestr + file
+                filename = self.subtitle + subtitle + file
                 output = self.fig_dir / filename
                 plt.savefig(output,bbox_inches='tight',dpi = 1000,format=file[1:])
                 print(f'Saving {output}')
