@@ -749,7 +749,7 @@ class Interpreter:
         print(f'Mean delay S.D.: {delay_period_sd}')
 
     def plot_acc_subset(self,subset_list,chance,sig_ys, subtitle='',significance_testing = False, stim_time = [0,250],
-                                   savefig=False, title = None, ylim = [.18,.55],chance_text_y = .17):
+                                   savefig=False, title = None, ylim = [.18,.55],chance_text_y = .17, legend_title=''):
         '''
         plots classification accuracies. Useful when doing classifcation on set size (1vs2,2vs3,3vs4) or electrode subsets (Frontal, Central, Parietal)
         '''
@@ -793,8 +793,6 @@ class Interpreter:
                 # Use Benjamini-Hochberg procedure for multiple comparisons, defaults to FDR of .05
                 _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
                 sig05 = corrected_p < .05
-                
-
 
                 plt.scatter(self.t[self.t>0][sig05]-10, np.ones(sum(sig05))*(sig_ys[isubset]), 
                             marker = 's', s=28, c = color)
@@ -807,7 +805,7 @@ class Interpreter:
             print(f'{subset} mean delay S.D.: {delay_period_sd}')
 
         handles,_ = ax.get_legend_handles_labels()
-        leg = ax.legend(handles, subset_list,title='Classification',fontsize=12)
+        leg = ax.legend(handles, subset_list,title=legend_title,fontsize=12)
         plt.setp(leg.get_title(),fontsize=12)
 
         # aesthetics
