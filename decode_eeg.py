@@ -15,6 +15,7 @@ from sklearn.metrics import confusion_matrix
 import mord
 import scipy.stats as sista
 from statsmodels.stats.multitest import multipletests
+import pingouin
 
 class Experiment:
     def __init__(self,experiment_name ,data_dir , info_from_file = True, test = False, info_variable_names = ['unique_id','chan_labels','chan_x','chan_y','chan_z','sampling_rate','times']):
@@ -32,6 +33,7 @@ class Experiment:
         self.behavior_files = None
         self.artifact_idx_files = None
         self.info_files = None
+        self.eyetracking_files = None
 
         if info_from_file:
             self.info = self.load_info(0,info_variable_names)
@@ -95,7 +97,25 @@ class Experiment:
         info = {k: np.squeeze(info_file[k]) for k in variable_names}
         
         return info
+    
+    def load_eyetracking(self, isub, variable_names = ['eyetracking_data', 'eyetracking_labels']):
+        """
+        load eyetracking data
+        """
+        if not self.eyetracking_files:
+            self.eyetracking_files = list(self.data_dir.glob('*eyetracking*.mat'))
 
+        subj_mat = sio.loadmat(self.eyetracking_files[isub],variable_names=variable_names)
+        eye = np.moveaxis(subj_mat['eyetracking_data'],[0,1,2],[1,2,0])
+        eye_labels_mat = subj_mat['eyetracking_labels']
+
+        eye_labels = []
+        for i in range(len(eye_labels_mat[0])):
+            eye_labels.append(str(eye_labels_mat[0][i][0]))
+        eye_labels = np.array(eye_labels)
+
+        return eye, eye_labels
+    
 class Experiment_Syncer:
     def __init__(
         self,
@@ -374,7 +394,7 @@ class Wrangler:
         for label in unique_labels:
             label_idx = np.append(label_idx,np.random.choice(np.arange(len(ydata))[ydata == label],downsamp,replace=False))
         
-        xdata = xdata[label_idx.astype(int),:,:]
+        xdata = xdata[label_idx.astype(int)]
         ydata = ydata[label_idx.astype(int)]
 
         return xdata,ydata
@@ -442,17 +462,17 @@ class Wrangler:
             y_train, y_test = ydata[train_index].astype(int), ydata[test_index].astype(int)
 
             if return_idx:
-                yield X_train_all, X_test_all, y_train, y_test, test_index
+                yield X_train_all, X_test_all, y_train, y_test, train_index, test_index
             else:
                 yield X_train_all, X_test_all, y_train, y_test
             self.ifold += 1
 
-    def roll_over_time(self, X_train_all, X_test_all=None):
+    def roll_over_time(self, X_train_all, X_test_all=None, return_idx=False):
         """
         returns one timepoint of EEG trial at a time
         """
-        for self.itime, time in enumerate(self.t):
-            time_window_idx = (self.samples >= time) & (self.samples < time + self.time_window)
+        for self.itime, self.time in enumerate(self.t):
+            time_window_idx = (self.samples >=  self.time) & (self.samples <  self.time + self.time_window)
 
             # Data for this time bin
             X_train = np.mean(X_train_all[...,time_window_idx],2)
@@ -707,7 +727,8 @@ class Interpreter:
             # only test on timepoints after stimulus onset
             for i,t in enumerate(np.arange(len(self.t))[self.t>0]):
                 # one-sided paired ttest
-                    _,p[i] = sista.ttest_rel(a=acc[:,t],b=acc_shuff[:,t],alternative='greater')
+                _, p[i] = sista.ttest_rel(a=acc[:,t],b=acc_shuff[:,t],alternative='greater')
+
             # Use Benjamini-Hochberg procedure for multiple comparisons, defaults to FDR of .05
             _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
             sig05 = corrected_p < .05
@@ -788,7 +809,7 @@ class Interpreter:
                 # only test on timepoints after stimulus onset
                 for i,t in enumerate(np.arange(len(self.t))[self.t>0]):
                     # one-sided paired ttest
-                        _,p[i] = sista.ttest_rel(a=acc[:,t],b=acc_shuff[:,t],alternative='greater')
+                    _, p[i] = sista.ttest_rel(a=acc[:,t],b=acc_shuff[:,t],alternative='greater')
 
                 # Use Benjamini-Hochberg procedure for multiple comparisons, defaults to FDR of .05
                 _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
