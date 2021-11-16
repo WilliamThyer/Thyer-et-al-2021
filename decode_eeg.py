@@ -783,7 +783,6 @@ class Interpreter:
         ax.plot(self.t,np.ones((len(self.t)))*chance,'--',color='gray')
         colors = ['royalblue','firebrick','forestgreen','orange','purple']
         
-        # sig_ys = [.2125,.1875,.2]
         for isubset,subset in enumerate(subset_list):
             color= colors[isubset]
             acc = self.acc[:,isubset]
@@ -853,7 +852,100 @@ class Interpreter:
         self.savefig('acc'+subtitle,save=savefig)
         plt.show()
     
-    def plot_conf_mat(self, subtitle='', color_map = plt.cm.RdGy_r, lower=0,upper=1, savefig = False,subplot = 111):
+    def plot_acc_compare_subset(self,subset_list,chance, subtitle='',significance_testing = False, stim_time = [0,250],
+                                   savefig=False, title = None, ylim = [.18,.55],chance_text_y = .17, legend_title=''):
+        '''
+        plots classification accuracies. Useful when doing classifcation on set size (1vs2,2vs3,3vs4) or electrode subsets (Frontal, Central, Parietal)
+        '''
+
+        # plotting
+        ax = plt.subplot(111)
+        stim_lower = ylim[0]+.01
+        stim_upper = ylim[1]
+        ax.fill_between(stim_time,[stim_lower,stim_lower],[stim_upper,stim_upper],color='gray',alpha=.5)
+        ax.plot(self.t,np.ones((len(self.t)))*chance,'--',color='gray')
+        colors = ['royalblue','firebrick','forestgreen','orange','purple']
+        sig_y = chance-.05
+
+        for isubset,subset in enumerate(subset_list):
+            color= colors[isubset]
+            acc = self.acc[:,isubset]
+            acc_shuff = self.acc_shuff[:,isubset]
+            
+            acc = np.mean(acc,2)
+            se = sista.sem(acc,0)
+            acc_mean = np.mean(acc,0)
+            upper_bound, lower_bound = acc_mean + se, acc_mean - se
+            acc_shuff = np.mean(acc_shuff,2)
+            se_shuff = sista.sem(acc_shuff,0)
+            acc_mean_shuff = np.mean(acc_shuff,0)
+            upper_bound_shuff, lower_bound_shuff = acc_mean_shuff + se_shuff, acc_mean_shuff - se_shuff
+            
+            ax.fill_between(self.t,upper_bound_shuff,lower_bound_shuff, alpha=.2,color='gray')
+            ax.plot(self.t,acc_mean_shuff,color='gray')
+            ax.fill_between(self.t,upper_bound,lower_bound, alpha=.5,color=color)
+            ax.plot(self.t,acc_mean,color=color,label=subset)
+
+            delay_period_acc = np.mean(acc_mean[self.t>250])
+            delay_period_sd = np.std(acc_mean[self.t>250]) 
+            print(f'{subset} mean delay accuracy: {delay_period_acc}')
+            print(f'{subset} mean delay S.D.: {delay_period_sd}')
+
+        # Significance Testing
+        if significance_testing:
+            acc1 = np.mean(self.acc[:,0],2)
+            acc2 = np.mean(self.acc[:,1],2)
+
+            p = np.zeros(len(self.t[self.t>0]))
+            # only test on timepoints after stimulus onset
+            for i,t in enumerate(np.arange(len(self.t))[self.t>0]):
+                # one-sided paired ttest
+                _, p[i] = sista.ttest_rel(a=acc1[:,t],b=acc2[:,t],alternative='greater')
+
+            # Use Benjamini-Hochberg procedure for multiple comparisons, defaults to FDR of .05
+            _,corrected_p,_,_ = multipletests(p,method='fdr_bh')
+            sig05 = corrected_p < .05
+
+            plt.scatter(self.t[self.t>0][sig05]-10, np.ones(sum(sig05))*(sig_y), 
+                        marker = 's', s=28, c = 'purple')
+        
+        sig_timepoints = self.t[self.t>0][sig05]
+        delay_period_acc = np.mean(acc_mean[self.t>250])
+        delay_period_sd = np.std(acc_mean[self.t>250]) 
+        print(f'significant timepoints: {sig_timepoints}')
+        print(f'mean delay accuracy: {delay_period_acc}')
+        print(f'mean delay S.D.: {delay_period_sd}')
+
+        handles,_ = ax.get_legend_handles_labels()
+        leg = ax.legend(handles, subset_list,title=legend_title,fontsize=12)
+        plt.setp(leg.get_title(),fontsize=12)
+
+        # aesthetics
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.yaxis.set_ticks_position('left')
+        ax.xaxis.set_ticks_position('bottom')
+        ax.yaxis.set_ticks(np.arange(.1,1.1,.1))
+        plt.setp(ax.get_xticklabels(), fontsize=14)
+        plt.setp(ax.get_yticklabels(), fontsize=14)
+        plt.xlim(-200,1200)
+        plt.ylim(ylim)
+
+        # labelling
+        plt.xlabel('Time from stimulus onset (ms)', fontsize=14)
+        plt.ylabel('Accuracy', fontsize=14)
+        ax.text(.88, chance_text_y, 'Shuffle', transform=ax.transAxes, fontsize=14,
+                verticalalignment='top', color='grey')
+        ax.text(0.185, .98, 'Stim', transform=ax.transAxes, fontsize=16,
+                verticalalignment='top', color='white')
+        if title is not None:
+            plt.title(title,fontsize = 18)
+
+        self.savefig('acc'+subtitle,save=savefig)
+        plt.show()
+    
+
+    def plot_conf_mat(self, subtitle='', color_map = plt.cm.RdGy_r, lower=0,upper=1, savefig = False,subplot = 111,title=''):
         """
         plots the confusion matrix for the classifier
 
@@ -881,7 +973,7 @@ class Interpreter:
                     color=color,
                     fontsize=16)
 
-        # plt.title(title)
+        plt.title(title,fontsize = 18)
         plt.colorbar()
         tick_marks = np.arange(len(self.labels))
         plt.xticks(tick_marks, self.labels)
@@ -889,7 +981,7 @@ class Interpreter:
         plt.ylabel('True Set Size', fontsize=14)
         plt.xlabel('Predicted Set Size',fontsize=14)
         plt.tight_layout()
-        plt.gca().invert_yaxis()
+        # plt.gca().invert_yaxis()
 
         plt.setp(ax.get_xticklabels(), fontsize=14)
         plt.setp(ax.get_yticklabels(), fontsize=14)
