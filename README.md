@@ -45,7 +45,7 @@ This decoding uses the [Mord](https://github.com/fabianp/mord) package which is 
 
 - Train classifiers on mixture of experiment 1 (color) and tests on experiment 2 (orientation) with set size 1 vs 2, 2 vs 3, & 3 vs 4.
 
-<img src="output/figures/acc_single_feat_ss_.png" alt="drawing" width="300"/>
+<img src="output/figures/acc_single_feat_ss.png" alt="drawing" width="300"/>
 
 `decode_load_single_feature_to_conjunction.ipynb`
 
@@ -57,7 +57,7 @@ This decoding uses the [Mord](https://github.com/fabianp/mord) package which is 
 
 - Trains classifiers on experiment 1 and 2 (single feature, color or orientation) 1 vs 2 and 2 vs 4. Also trains classifiers on experiment 3 (conjunction, color & orientation) 1 vs 2 and 2 vs 4. Then compares predictions from those classifiers.
 
-<img src="output/figures/preds_dont_double.png" alt="drawing" width="300"/>
+<img src="output/figures/edited figures/preds_dont_double.png" alt="drawing" width="300"/>
 
 `decode_load_acc_and_k.ipynb`
 
@@ -70,7 +70,6 @@ This decoding uses the [Mord](https://github.com/fabianp/mord) package which is 
 - Using data from Diaz et al. 2021, train classifier on set size 2 ungrouped and set size 4 ungrouped. Then test on set size 4 grouped (4 items, but arranged to look like 2). Measure distance from hyperplane for each condition.
 
 <img src="output/figures/colinearity_hyperplane.png" alt="drawing" width="300"/>
-<img src="output/figures/colinearity_hyperplane_periods.png" alt="drawing" width="300"/>
 
 `behavior_analysis.ipynb`
 
