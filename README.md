@@ -85,3 +85,9 @@ This decoding uses the [Mord](https://github.com/fabianp/mord) package which is 
 `decode_load_eyetracking.ipynb`
 
 - Classifies load in Experiment 1 using EOG data. Plots accuracy, setsize pair accuracy, and confusion matrices.
+
+<img src="output/figures/acc1801_eeg_and_eog.png" alt="drawing" width="400"/>
+<img src="output/figures/acc_eog_pairwise_.png" alt="drawing" width="400"/>
+<img src="output/figures/conf_mat_eeg.png" alt="drawing" width="300"/>
+<img src="output/figures/conf_mat_eog.png" alt="drawing" width="300"/>
+
