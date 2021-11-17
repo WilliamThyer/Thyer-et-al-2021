@@ -82,6 +82,8 @@ This decoding uses the [Mord](https://github.com/fabianp/mord) package which is 
 
 - Plots frontal, central, and parietal/occipital ERPs for each experiment.
 
+<img src="output/figures/erps.png" alt="drawing" width="400"/>
+
 `decode_load_eyetracking.ipynb`
 
 - Classifies load in Experiment 1 using EOG data. Plots accuracy, setsize pair accuracy, and confusion matrices.
