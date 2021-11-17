@@ -1096,17 +1096,22 @@ class ERP:
         self.timestr = time.strftime("%Y%m%d_%H%M%S")
         self.subtitle = subtitle
 
+        import matplotlib
+        matplotlib.rcParams['font.sans-serif'] = "Arial"
+        matplotlib.rcParams['font.family'] = "sans-serif"
+
         if fig_dir:
             self.fig_dir = fig_dir
         else:
             self.fig_dir = Path('output/figures')
 
-    def savefig(self, subtitle = '', file_format = '.pdf', save = True):
+    def savefig(self, subtitle = '', file_format = ['.pdf'], save = True):
         if save:
-            filename = self.subtitle + subtitle + self.timestr + file_format
-            output = self.fig_dir / filename
-            plt.savefig(output,bbox_inches='tight',dpi = 1000,format=file_format[1:])
-            print(f'Saving {output}')
+            for format in file_format:
+                filename = self.subtitle + subtitle + format
+                output = self.fig_dir / filename
+                plt.savefig(output,bbox_inches='tight',dpi = 500,format=format[1:])
+                print(f'Saving {output}')
 
     def load_all_eeg(self):
         
@@ -1128,9 +1133,9 @@ class ERP:
 
         return xdata
 
-    def plot_ss(self, xdata_all, ydata_all, subtitle = '',
+    def plot_ss(self, xdata_all, ydata_all, subtitle = '', ax = None,
                 electrode_subset=None, electrode_idx = None,
-                savefig=False):
+                savefig=False,file_format = ['.png','.pdf']):
         
         ss_data = np.zeros((self.exp.nsub,len(np.unique(ydata_all[0])),len(self.info['times']))) #hardcode
         for isub in range(self.exp.nsub):
@@ -1140,28 +1145,22 @@ class ERP:
                 ss_idx = ydata == ss
                 data = np.mean(xdata[ss_idx],0)
                 ss_data[isub,iss] = np.mean(self._select_electrodes(data,electrode_subset,electrode_idx),0)
-                
-        ax = plt.subplot(111)
+        
+        if ax is None:
+            ax = plt.subplot(111)
 
-        upper,lower=0,0
         for iss,ss in enumerate(np.unique(ydata_all[0])):
             x = np.mean(ss_data[:,iss],0)
             se = np.std(ss_data[:,iss],0)/np.sqrt(self.exp.nsub)
             
             # ERP
-            plt.plot(self.info['times'],x, label=f'{ss}',linewidth=2.5,alpha=0.8)
+            ax.plot(self.info['times'],x, label=f'{ss}',linewidth=2.5,alpha=0.8)
             # SE
-            plt.fill_between(self.info['times'],x-se,x+se,alpha=.3)
-
-            maxi,mini =  max(x) + max(se),min(x) - min(se)
-            print(maxi)
-            if maxi > upper: upper = maxi
-            if mini < lower: lower = mini
+            ax.fill_between(self.info['times'],x-se,x+se,alpha=.3)
 
         # Grey stim bar
-        plt.fill_between([0,250],[lower-1,lower-1],[upper+.45,upper+.45],color='gray',alpha=.5,zorder=0)
+        ax.fill_between([0,250],[-4,-4],[6,6],color='gray',alpha=.5,zorder=0)
         
-
         # Hide the right and top spines]
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
@@ -1169,15 +1168,19 @@ class ERP:
         # Only show ticks on the left and bottom spines
         ax.yaxis.set_ticks_position('left')
         ax.xaxis.set_ticks_position('bottom')
+        # plt.setp(ax.get_xticklabels(), fontsize=14)
+        # plt.setp(ax.get_yticklabels(), fontsize=14)
 
         # Cleaning up plot
         plt.gca().invert_yaxis()
-        plt.legend(title = 'Set Size', loc='lower right')
-        plt.xlabel('Time from Array Onset (ms)')
-        plt.ylabel("Amplitude (microvolts)")
+        # legend = plt.legend(title = 'Set Size', loc='lower right',fontsize=11)
+        # plt.setp(legend.get_title(),fontsize=11)
+        ax.set_xlabel('Time from Array Onset (ms)')
+        ax.set_ylabel("Amplitude (microvolts)")
 
-        self.savefig(subtitle=subtitle,save=savefig)
-        plt.show()
+        if ax is None:
+            self.savefig(subtitle=subtitle,save=savefig,file_format=file_format)
+            plt.show()
 
     def plot_feat(self, xdata_all, ydata_all, subtitle = '',
                   electrode_subset=None, electrode_idx = None,
