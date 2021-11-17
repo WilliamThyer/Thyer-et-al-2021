@@ -82,6 +82,6 @@ This decoding uses the [Mord](https://github.com/fabianp/mord) package which is 
 
 - Plots frontal, central, and parietal/occipital ERPs for each experiment.
 
-`plot_topomap_and_coefs.ipynb`
+`decode_load_eyetracking.ipynb`
 
-- Plots topography maps for each set size at 250-750 and 750-1250 ms time periods. Also plots classifier coefficients, projected onto scalp.
+- Classifies load in Experiment 1 using EOG data. Plots accuracy, setsize pair accuracy, and confusion matrices.
